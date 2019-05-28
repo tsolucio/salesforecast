@@ -191,7 +191,7 @@
 <defaultvalue></defaultvalue>
 <sequence>3</sequence>
 <maximumlength>100</maximumlength>
-<typeofdata>N~M</typeofdata>
+<typeofdata>I~M</typeofdata>
 <quickcreate>1</quickcreate>
 <quickcreatesequence></quickcreatesequence>
 <displaytype>1</displaytype>
