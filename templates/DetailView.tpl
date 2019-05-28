@@ -18,202 +18,78 @@
 <script type="text/javascript" src="modules/Forecasts/flot/jquery.flot.highlighter.js"></script>
 <script type="text/javascript" src="modules/Forecasts/flot/jquery.flot.pyramid.js"></script>
 <span id="crmspanid" style="display:none;position:absolute;" onmouseover="show('crmspanid');">
-   <a class="link" align="right" href="javascript:;">{$APP.LBL_EDIT_BUTTON}</a>
+	<a class="link" align="right" href="javascript:;">{$APP.LBL_EDIT_BUTTON}</a>
 </span>
-
 <div id="convertleaddiv" style="display:block;position:absolute;left:225px;top:150px;"></div>
-{include file='modules/evvtgendoc/gendocdiv.tpl'}
 <script>
 var gVTModule = '{$smarty.request.module|@vtlib_purify}';
 {literal}
-function callConvertLeadDiv(id){
-	jQuery.ajax({
-		method:"POST",
-		url:'index.php?module=Leads&action=LeadsAjax&file=ConvertLead&record='+id,
-	}).done(function(response) {
-		jQuery("#convertleaddiv").html(response);
-		eval(jQuery("#conv_leadcal").html());
-	});
-}
-function showHideStatus(sId,anchorImgId,sImagePath)
-{
-	oObj = eval(document.getElementById(sId));
-	if(oObj.style.display == 'block')
-	{
+function showHideStatus(sId,anchorImgId, sImagePath) {
+	var oObj = document.getElementById(sId);
+	if (oObj.style.display == 'block') {
 		oObj.style.display = 'none';
-		if(anchorImgId !=null){
+		if (anchorImgId !=null) {
 {/literal}
-		eval(document.getElementById(anchorImgId)).src =  'themes/images/inactivate.gif';
-			eval(document.getElementById(anchorImgId)).alt = '{'LBL_Show'|@getTranslatedString:'Settings'}';
-			eval(document.getElementById(anchorImgId)).title = '{'LBL_Show'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).src = 'themes/images/inactivate.gif';
+			document.getElementById(anchorImgId).alt = '{'LBL_Show'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).title = '{'LBL_Show'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).parentElement.className = 'exp_coll_block activate';
 {literal}
 		}
-	}
-	else
-	{
+	} else {
 		oObj.style.display = 'block';
-		if(anchorImgId !=null){
+		if (anchorImgId !=null) {
 {/literal}
-		eval(document.getElementById(anchorImgId)).src = 'themes/images/activate.gif';
-			eval(document.getElementById(anchorImgId)).alt = '{'LBL_Hide'|@getTranslatedString:'Settings'}';
-			eval(document.getElementById(anchorImgId)).title = '{'LBL_Hide'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).src = 'themes/images/activate.gif';
+			document.getElementById(anchorImgId).alt = '{'LBL_Hide'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).title = '{'LBL_Hide'|@getTranslatedString:'Settings'}';
+			document.getElementById(anchorImgId).parentElement.className = 'exp_coll_block inactivate';
 {literal}
 		}
 	}
 }
-<!-- End Of Code modified by SAKTI on 10th Apr, 2008 -->
-
-<!-- Start of code added by SAKTI on 16th Jun, 2008 -->
-function setCoOrdinate(elemId){
-	oBtnObj = document.getElementById(elemId);
-	var tagName = document.getElementById('lstRecordLayout');
-	leftpos  = 0;
-	toppos = 0;
-	aTag = oBtnObj;
-	do {
-	  leftpos  += aTag.offsetLeft;
-	  toppos += aTag.offsetTop;
-	} while(aTag = aTag.offsetParent);
-
-	tagName.style.top= toppos + 20 + 'px';
-	tagName.style.left= leftpos - 276 + 'px';
-}
-
-function getListOfRecords(obj, sModule, iId,sParentTab) {
-	jQuery.ajax({
-		method:"POST",
-		url:'index.php?module=Users&action=getListOfRecords&ajax=true&CurModule='+sModule+'&CurRecordId='+iId+'&CurParentTab='+sParentTab,
-	}).done(function(response) {
-		sResponse = response;
-		jQuery("#lstRecordLayout").html(sResponse);
-		Lay = 'lstRecordLayout';
-		var tagName = document.getElementById(Lay);
-		var leftSide = findPosX(obj);
-		var topSide = findPosY(obj);
-		var maxW = tagName.style.width;
-		var widthM = maxW.substring(0,maxW.length-2);
-		var getVal = parseInt(leftSide) + parseInt(widthM);
-		if (getVal  > document.body.clientWidth ) {
-			leftSide = parseInt(leftSide) - parseInt(widthM);
-			tagName.style.left = leftSide + 230 + 'px';
-			tagName.style.top = topSide + 20 + 'px';
-		} else {
-			tagName.style.left = leftSide + 230 + 'px';
-		}
-		setCoOrdinate(obj.id);
-		tagName.style.display = 'block';
-		tagName.style.visibility = "visible";
-	});
-}
 {/literal}
-function tagvalidate()
-{ldelim}
-	if(trim(document.getElementById('txtbox_tagfields').value) != '')
-		SaveTag('txtbox_tagfields','{$ID}','{$MODULE}');
-	else
-	{ldelim}
-		alert("{$APP.PLEASE_ENTER_TAG}");
-		return false;
-	{rdelim}
-{rdelim}
-function DeleteTag(id,recordid)
-{ldelim}
-	document.getElementById("vtbusy_info").style.display="inline";
-	jQuery('#tag_'+id).fadeOut();
-	jQuery.ajax({ldelim}
-		method:"POST",
-		url:"index.php?file=TagCloud&module={$MODULE}&action={$MODULE}Ajax&ajxaction=DELETETAG&recordid="+recordid+"&tagid=" +id,
-	{rdelim}).done(function(response) {ldelim}
-		getTagCloud();
-		jQuery("#vtbusy_info").hide();
-	{rdelim});
-{rdelim}
-
-//Added to send a file, in Documents module, as an attachment in an email
-function sendfile_email()
-{ldelim}
-	filename = document.getElementById('dldfilename').value;
-	document.DetailView.submit();
-	OpenCompose(filename,'Documents');
-{rdelim}
-
 </script>
 
 <div id="lstRecordLayout" class="layerPopup" style="display:none;width:325px;height:300px;"></div>
 
-{if $MODULE eq 'Accounts' || $MODULE eq 'Contacts' || $MODULE eq 'Leads'}
-        {if $MODULE eq 'Accounts'}
-                {assign var=address1 value='$MOD.LBL_BILLING_ADDRESS'}
-                {assign var=address2 value='$MOD.LBL_SHIPPING_ADDRESS'}
-        {/if}
-        {if $MODULE eq 'Contacts'}
-                {assign var=address1 value='$MOD.LBL_PRIMARY_ADDRESS'}
-                {assign var=address2 value='$MOD.LBL_ALTERNATE_ADDRESS'}
-        {/if}
-        <div id="locateMap" onMouseOut="fninvsh('locateMap')" onMouseOver="fnvshNrm('locateMap')">
-                <table bgcolor="#ffffff" border="0" cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                                <td>
-                                {if $MODULE eq 'Accounts'}
-                                        <a href="javascript:;" onClick="fninvsh('locateMap'); searchMapLocation( 'Main' );" class="calMnu">{$MOD.LBL_BILLING_ADDRESS}</a>
-                                        <a href="javascript:;" onClick="fninvsh('locateMap'); searchMapLocation( 'Other' );" class="calMnu">{$MOD.LBL_SHIPPING_ADDRESS}</a>
-                               {/if}
-                               {if $MODULE eq 'Contacts'}
-                                <a href="javascript:;" onClick="fninvsh('locateMap'); searchMapLocation( 'Main' );" class="calMnu">{$MOD.LBL_PRIMARY_ADDRESS}</a>
-                                        <a href="javascript:;" onClick="fninvsh('locateMap'); searchMapLocation( 'Other' );" class="calMnu">{$MOD.LBL_ALTERNATE_ADDRESS}</a>
-                               {/if}
-                                         </td>
-                        </tr>
-                </table>
-        </div>
-{/if}
+<table width="100%" cellpadding="2" cellspacing="0" border="0" class="detailview_wrapper_table">
+	<tr>
+		<td class="detailview_wrapper_cell">
 
-<table width="100%" cellpadding="2" cellspacing="0" border="0">
-<tr>
-	<td>
+			{include file='Buttons_List.tpl' isDetailView=true}
 
-		{include file='Buttons_List.tpl'}
-
-<!-- Contents -->
-<table border=0 cellspacing=0 cellpadding=0 width=98% align=center>
-<tr>
-	<td valign=top><img src="{'showPanelTopLeft.gif'|@vtiger_imageurl:$THEME}"></td>
-	<td class="showPanelBg" valign=top width=100%>
-		<!-- PUBLIC CONTENTS STARTS-->
-		<div class="small" style="padding:10px" onclick="hndCancelOutsideClick();";>
-		<table align="center" border="0" cellpadding="0" cellspacing="0" width="95%">
-			<tr><td>
-		  		{* Module Record numbering, used MOD_SEQ_ID instead of ID *}
-		  		{assign var="USE_ID_VALUE" value=$MOD_SEQ_ID}
-		  		{if $USE_ID_VALUE eq ''} {assign var="USE_ID_VALUE" value=$ID} {/if}
-		 		<span class="dvHeaderText">[ {$USE_ID_VALUE} ] {$NAME} -  {$SINGLE_MOD|@getTranslatedString:$MODULE} {$APP.LBL_INFORMATION} ({$YEAR})</span>&nbsp;&nbsp;&nbsp;<span class="small">{$UPDATEINFO}</span>&nbsp;<span id="vtbusy_info" style="display:none;" valign="bottom"><img src="{'vtbusy.gif'|@vtiger_imageurl:$THEME}" border="0"></span><span id="vtbusy_info" style="visibility:hidden;" valign="bottom"><img src="{'vtbusy.gif'|@vtiger_imageurl:$THEME}" border="0"></span>
-		 	</td></tr>
-		 </table>
-		<br>
-		{include file='applicationmessage.tpl'}
-		<!-- Account details tabs -->
-		<table border=0 cellspacing=0 cellpadding=0 width=95% align=center>
-		<tr>
-			<td>
-				<table border=0 cellspacing=0 cellpadding=3 width=100% class="small">
+			<!-- Contents -->
+			<table border=0 cellspacing=0 cellpadding=0 width=98% align=center>
+				<tr>
+					<td valign=top><img src="{'showPanelTopLeft.gif'|@vtiger_imageurl:$THEME}"></td>
+					<td class="showPanelBg" valign=top width=100%>
+						<!-- PUBLIC CONTENTS STARTS-->
+						<div class="small" style="padding:14px" onclick="hndCancelOutsideClick();";>
+						{include file='applicationmessage.tpl'}
+						<!-- Entity and More information tabs -->
+						<table border=0 cellspacing=0 cellpadding=0 width=95% align=center>
+							<tr>
+								<td>
+								<table border=0 cellspacing=0 cellpadding=3 width=100% class="small">
 				<tr>
 					<td class="dvtTabCache" style="width:10px" nowrap>&nbsp;</td>
 					<td class="dvtSelectedCell" align=center nowrap>{$SINGLE_MOD|@getTranslatedString:$MODULE} {$APP.LBL_INFORMATION}</td>
 					<td class="dvtTabCache" style="width:10px">&nbsp;</td>
-					{if $SinglePane_View eq 'false' && $IS_REL_LIST neq false && $IS_REL_LIST|@count > 0}
+						{if $SinglePane_View eq 'false' && $IS_REL_LIST neq false && $IS_REL_LIST|@count > 0}
 					<td class="dvtUnSelectedCell" onmouseout="fnHideDrop('More_Information_Modules_List');" onmouseover="fnDropDown(this,'More_Information_Modules_List');" align="center" nowrap>
 						<a href="index.php?action=CallRelatedList&module={$MODULE}&record={$ID}&parenttab={$CATEGORY}">{$APP.LBL_MORE} {$APP.LBL_INFORMATION}</a>
-						<div onmouseover="fnShowDrop('More_Information_Modules_List')" onmouseout="fnHideDrop('More_Information_Modules_List')"
-									 id="More_Information_Modules_List" class="drop_mnu" style="left: 502px; top: 76px; display: none;">
+						<div onmouseover="fnShowDrop('More_Information_Modules_List')" onmouseout="fnHideDrop('More_Information_Modules_List')" id="More_Information_Modules_List" class="drop_mnu" style="left: 502px; top: 76px; display: none;">
 							<table border="0" cellpadding="0" cellspacing="0" width="100%">
 							{foreach key=_RELATION_ID item=_RELATED_MODULE from=$IS_REL_LIST}
-																<tr><td><a class="drop_down" href="index.php?action=CallRelatedList&module={$MODULE}&record={$ID}&parenttab={$CATEGORY}&selected_header={$_RELATED_MODULE}&relation_id={$_RELATION_ID}#tbl_{$MODULE}_{$_RELATED_MODULE}">{$_RELATED_MODULE|@getTranslatedString:$_RELATED_MODULE}</a></td></tr>
+								<tr><td><a class="drop_down" href="index.php?action=CallRelatedList&module={$MODULE}&record={$ID}&parenttab={$CATEGORY}&selected_header={$_RELATED_MODULE}&relation_id={$_RELATION_ID}#tbl_{$MODULE}_{$_RELATED_MODULE}">{$_RELATED_MODULE|@getTranslatedString:$_RELATED_MODULE}</a></td></tr>
 							{/foreach}
 							</table>
 						</div>
 					</td>
 					{/if}
 					<td class="dvtTabCache" align="right" style="width:100%">
+					<span class='slds-float_right'>
 						{if $EDIT_PERMISSION eq 'yes'}
 						<input title="{$APP.LBL_EDIT_BUTTON_TITLE}" accessKey="{$APP.LBL_EDIT_BUTTON_KEY}" class="crmbutton small edit" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='{$ID}';DetailView.module.value='{$MODULE}';submitFormForAction('DetailView','EditView');" type="button" name="Edit" value="&nbsp;{$APP.LBL_EDIT_BUTTON_LABEL}&nbsp;">&nbsp;
 						{/if}
@@ -224,7 +100,7 @@ function sendfile_email()
 						<input title="{$APP.LBL_DELETE_BUTTON_TITLE}" accessKey="{$APP.LBL_DELETE_BUTTON_KEY}" class="crmbutton small delete" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='index'; {if $MODULE eq 'Accounts'} var confirmMsg = '{$APP.NTC_ACCOUNT_DELETE_CONFIRMATION}' {else} var confirmMsg = '{$APP.NTC_DELETE_CONFIRMATION}' {/if}; submitFormForActionWithConfirmation('DetailView', 'Delete', confirmMsg);" type="button" name="Delete" value="{$APP.LBL_DELETE_BUTTON_LABEL}">&nbsp;
 						{/if}
 						{if $privrecord neq ''}
-						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" accessKey="{$APP.LNK_LIST_PREVIOUS}" onclick="location.href='index.php?module={$MODULE}&viewtype={$VIEWTYPE}&action=DetailView&record={$privrecord}&parenttab={$CATEGORY}&start={$privrecordstart}'" name="privrecord" value="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev.gif'|@vtiger_imageurl:$THEME}">&nbsp;
+						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" accessKey="{$APP.LNK_LIST_PREVIOUS}" onclick="location.href='index.php?module={$MODULE}&action=DetailView&record={$privrecord}&parenttab={$CATEGORY}&start={$privrecordstart}'" name="privrecord" value="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{else}
 						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev_disabled.gif'|@vtiger_imageurl:$THEME}">
 						{/if}
@@ -232,11 +108,12 @@ function sendfile_email()
 						<img align="absmiddle" title="{$APP.LBL_JUMP_BTN}" accessKey="{$APP.LBL_JUMP_BTN}" onclick="var obj = this;var lhref = getListOfRecords(obj, '{$MODULE}',{$ID},'{$CATEGORY}');" name="jumpBtnIdTop" id="jumpBtnIdTop" src="{'rec_jump.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{/if}
 						{if $nextrecord neq ''}
-						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" accessKey="{$APP.LNK_LIST_NEXT}" onclick="location.href='index.php?module={$MODULE}&viewtype={$VIEWTYPE}&action=DetailView&record={$nextrecord}&parenttab={$CATEGORY}&start={$nextrecordstart}'" name="nextrecord" src="{'rec_next.gif'|@vtiger_imageurl:$THEME}">&nbsp;
+						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" accessKey="{$APP.LNK_LIST_NEXT}" onclick="location.href='index.php?module={$MODULE}&action=DetailView&record={$nextrecord}&parenttab={$CATEGORY}&start={$nextrecordstart}'" name="nextrecord" src="{'rec_next.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{else}
 						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" src="{'rec_next_disabled.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{/if}
 						<img align="absmiddle" title="{$APP.TOGGLE_ACTIONS}" src="{'menu-icon.png'|@vtiger_imageurl:$THEME}" width="16px;" onclick="{literal}if (document.getElementById('actioncolumn').style.display=='none') {document.getElementById('actioncolumn').style.display='table-cell';}else{document.getElementById('actioncolumn').style.display='none';}{/literal}">&nbsp;
+					</span>
 					</td>
 				</tr>
 				</table>
@@ -307,7 +184,7 @@ function sendfile_email()
 		{/if}
 		</td></tr></table>
 		</td>
-		<td style="width:40%;text-align:center;vertical-align: top;" id="actioncolumn"><div id="pyramid" style="width:90%;height:300px;margin: 8px auto;"></div></td>
+		<td style="width:20%;text-align:center;vertical-align: top;" id="actioncolumn"><div id="pyramid" style="width:90%;height:300px;margin: 8px auto;"></div></td>
 		</table>
 		</td>
 		</tr>
@@ -322,7 +199,7 @@ function sendfile_email()
 					<td class="dvtUnSelectedCell" align=center nowrap><a href="index.php?action=CallRelatedList&module={$MODULE}&record={$ID}&parenttab={$CATEGORY}">{$APP.LBL_MORE} {$APP.LBL_INFORMATION}</a></td>
 					{/if}
 					<td class="dvtTabCacheBottom" align="right" style="width:100%">
-						&nbsp;
+						<span class='slds-float_right'>
 						{if $EDIT_PERMISSION eq 'yes'}
 						<input title="{$APP.LBL_EDIT_BUTTON_TITLE}" accessKey="{$APP.LBL_EDIT_BUTTON_KEY}" class="crmbutton small edit" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='DetailView'; DetailView.return_id.value='{$ID}';DetailView.module.value='{$MODULE}';submitFormForAction('DetailView','EditView');" type="submit" name="Edit" value="&nbsp;{$APP.LBL_EDIT_BUTTON_LABEL}&nbsp;">&nbsp;
 						{/if}
@@ -333,7 +210,7 @@ function sendfile_email()
 								<input title="{$APP.LBL_DELETE_BUTTON_TITLE}" accessKey="{$APP.LBL_DELETE_BUTTON_KEY}" class="crmbutton small delete" onclick="DetailView.return_module.value='{$MODULE}'; DetailView.return_action.value='index'; {if $MODULE eq 'Accounts'} var confirmMsg = '{$APP.NTC_ACCOUNT_DELETE_CONFIRMATION}' {else} var confirmMsg = '{$APP.NTC_DELETE_CONFIRMATION}' {/if}; submitFormForActionWithConfirmation('DetailView', 'Delete', confirmMsg);" type="button" name="Delete" value="{$APP.LBL_DELETE_BUTTON_LABEL}">&nbsp;
 						{/if}
 						{if $privrecord neq ''}
-						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" accessKey="{$APP.LNK_LIST_PREVIOUS}" onclick="location.href='index.php?module={$MODULE}&viewtype={$VIEWTYPE}&action=DetailView&record={$privrecord}&parenttab={$CATEGORY}'" name="privrecord" value="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev.gif'|@vtiger_imageurl:$THEME}">&nbsp;
+						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" accessKey="{$APP.LNK_LIST_PREVIOUS}" onclick="location.href='index.php?module={$MODULE}&action=DetailView&record={$privrecord}&parenttab={$CATEGORY}'" name="privrecord" value="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{else}
 						<img align="absmiddle" title="{$APP.LNK_LIST_PREVIOUS}" src="{'rec_prev_disabled.gif'|@vtiger_imageurl:$THEME}">
 						{/if}
@@ -341,10 +218,12 @@ function sendfile_email()
 						<img align="absmiddle" title="{$APP.LBL_JUMP_BTN}" accessKey="{$APP.LBL_JUMP_BTN}" onclick="var obj = this;var lhref = getListOfRecords(obj, '{$MODULE}',{$ID},'{$CATEGORY}');" name="jumpBtnIdBottom" id="jumpBtnIdBottom" src="{'rec_jump.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{/if}
 						{if $nextrecord neq ''}
-						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" accessKey="{$APP.LNK_LIST_NEXT}" onclick="location.href='index.php?module={$MODULE}&viewtype={$VIEWTYPE}&action=DetailView&record={$nextrecord}&parenttab={$CATEGORY}'" name="nextrecord" src="{'rec_next.gif'|@vtiger_imageurl:$THEME}">&nbsp;
+						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" accessKey="{$APP.LNK_LIST_NEXT}" onclick="location.href='index.php?module={$MODULE}&action=DetailView&record={$nextrecord}&parenttab={$CATEGORY}'" name="nextrecord" src="{'rec_next.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{else}
 						<img align="absmiddle" title="{$APP.LNK_LIST_NEXT}" src="{'rec_next_disabled.gif'|@vtiger_imageurl:$THEME}">&nbsp;
 						{/if}
+						<img align="absmiddle" title="{$APP.TOGGLE_ACTIONS}" src="{'menu-icon.png'|@vtiger_imageurl:$THEME}" width="16px;" onclick="{literal}if (document.getElementById('actioncolumn').style.display=='none') {document.getElementById('actioncolumn').style.display='table-cell';}else{document.getElementById('actioncolumn').style.display='none';}{/literal}">&nbsp;
+						</span>
 					</td>
 				</tr>
 			</table>
@@ -390,11 +269,10 @@ jQuery(document).ready(function() {
 });
 {/literal}
 </script>
-<!-- added for validation -->
 <script>
-  var fieldname = new Array({$VALIDATION_DATA_FIELDNAME});
-  var fieldlabel = new Array({$VALIDATION_DATA_FIELDLABEL});
-  var fielddatatype = new Array({$VALIDATION_DATA_FIELDDATATYPE});
+	var fieldname = new Array({$VALIDATION_DATA_FIELDNAME});
+	var fieldlabel = new Array({$VALIDATION_DATA_FIELDLABEL});
+	var fielddatatype = new Array({$VALIDATION_DATA_FIELDDATATYPE});
 </script>
 </td>
 	<td align=right valign=top><img src="{'showPanelTopRight.gif'|@vtiger_imageurl:$THEME}"></td>
