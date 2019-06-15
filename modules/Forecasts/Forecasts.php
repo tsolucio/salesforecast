@@ -39,7 +39,7 @@ class Forecasts extends CRMEntity {
 	 */
 	public $tab_name_index = array(
 		'vtiger_crmentity' => 'crmid',
-		'vtiger_forecasts'   => 'forecastsid',
+		'vtiger_forecasts' => 'forecastsid',
 		'vtiger_forecastscf' => 'forecastsid',
 	);
 
@@ -315,17 +315,17 @@ class Forecasts extends CRMEntity {
 
 	public function updateForecast() {
 		global $adb;
-	  // Delete Forecasts-Potentials relations
+		// Delete Forecasts-Potentials relations
 		$query = "delete from vtiger_crmentityrel where crmid={$this->id}";
 		$adb->query($query);
-	  // Read forecast data
+		// Read forecast data
 		$query = "select f.*, crm_f.smownerid
-	  from vtiger_forecasts f
-	  join vtiger_crmentity crm_f on crm_f.crmid=f.forecastsid
-	  where f.forecastsid={$this->id}";
+			from vtiger_forecasts f
+			join vtiger_crmentity crm_f on crm_f.crmid=f.forecastsid
+			where f.forecastsid={$this->id}";
 		$res = $adb->query($query);
 		$forecastData = $adb->getNextRow($res, false);
-	  // Prepare queries
+		// Prepare queries
 		$year = $forecastData['year'];
 		$first_month = $this->getFirstMonth();
 		$last_month = $this->getLastMonth();
@@ -340,20 +340,18 @@ class Forecasts extends CRMEntity {
 			$conditions[] = "(spr.productid={$forecastData['relatedto']} or cer.relcrmid={$forecastData['relatedto']})";
 		}
 		$conditions_str = implode(' and ', $conditions);
-	  // Get closed potentials total amount
+		// Get closed potentials total amount
 		$amount_closed = array();
 		$amount_pipeline = array();
 		for ($m=$first_month; $m<=$last_month; $m++) {
 			$amount_closed[$m] = 0;
 			$amount_pipeline[$m] = 0;
 			$query = "select distinct(p.potentialid), p.amount, p.sales_stage
-	    from vtiger_potential p
-	    join vtiger_crmentity crm_p on crm_p.crmid=p.potentialid and crm_p.deleted=0
-	    left join vtiger_seproductsrel spr on spr.crmid=p.potentialid
-	    left join vtiger_crmentityrel cer on cer.crmid=p.potentialid
-	    where year(p.closingdate)={$year}
-	    and month(p.closingdate)={$m}
-	    and {$conditions_str}";
+				from vtiger_potential p
+				join vtiger_crmentity crm_p on crm_p.crmid=p.potentialid and crm_p.deleted=0
+				left join vtiger_seproductsrel spr on spr.crmid=p.potentialid
+				left join vtiger_crmentityrel cer on cer.crmid=p.potentialid
+				where year(p.closingdate)={$year} and month(p.closingdate)={$m} and {$conditions_str}";
 			$res = $adb->query($query);
 			while ($row = $adb->getNextRow($res, false)) {
 				if ($row['sales_stage']=='Closed Won') {
@@ -361,12 +359,12 @@ class Forecasts extends CRMEntity {
 				} elseif ($row['sales_stage']!='Closed Lost') {
 					$amount_pipeline[$m] += $row['amount'];
 				}
-			  // Relate potential to forecast
+				// Relate potential to forecast
 				$query = "insert into vtiger_crmentityrel set crmid={$this->id}, module='Forecasts', relcrmid={$row['potentialid']}, relmodule='Potentials'";
 				$adb->query($query);
 			}
 		}
-	  // Recalculate totals
+		// Recalculate totals
 		$total_closed = 0;
 		$total_pipeline = 0;
 		$update_fields = array();
@@ -459,14 +457,14 @@ class Forecasts extends CRMEntity {
 				and month(vtiger_potential.closingdate) in ({$months}) and {$conditions_str}
 			GROUP BY vtiger_potential.sales_stage";
 
-		// 1  => 'Prospecting'
-		// 2  => 'Qualification'
-		// 3  => 'Id. Decision Makers'
-		// 4  => 'Needs Analysis'
-		// 5  => 'Value Proposition'
-		// 6  => 'Perception Analysis'
-		// 7  => 'Proposal/Price Quote'
-		// 8  => 'Negotiation/Review'
+		// 1 => 'Prospecting'
+		// 2 => 'Qualification'
+		// 3 => 'Id. Decision Makers'
+		// 4 => 'Needs Analysis'
+		// 5 => 'Value Proposition'
+		// 6 => 'Perception Analysis'
+		// 7 => 'Proposal/Price Quote'
+		// 8 => 'Negotiation/Review'
 		$funnelrdo = array(	);
 		// initialize array
 		for ($fv = 1; $fv <= 8; $fv++) {
@@ -502,13 +500,13 @@ class Forecasts extends CRMEntity {
 			}
 		}
 
-		$log->debug("Exiting getFunnelValues method ...");
+		$log->debug('< getFunnelValues');
 		return $funnelrdo;
 	}
 
 	public function getPotentials($month, $id, $cur_tab_id, $rel_tab_id, $actions = false) {
 		global $log, $currentModule;
-		$log->debug("Entering getPotentials(".$id.") method ...");
+		$log->debug('> getPotentials '.$id);
 		$this_module = $currentModule;
 
 		$related_module = vtlib_getModuleNameById($rel_tab_id);
@@ -561,7 +559,7 @@ class Forecasts extends CRMEntity {
 			LEFT JOIN vtiger_seproductsrel on vtiger_seproductsrel.crmid=vtiger_potential.potentialid
 			LEFT JOIN vtiger_crmentityrel on vtiger_crmentityrel.crmid=vtiger_potential.potentialid
 			WHERE vtiger_crmentity.deleted = 0 AND year(vtiger_potential.closingdate)={$this->column_fields['year']}
-			  and month(vtiger_potential.closingdate)={$month} and {$conditions_str}";
+				and month(vtiger_potential.closingdate)={$month} and {$conditions_str}";
 		$return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
 
 		if ($return_value == null) {
@@ -569,7 +567,7 @@ class Forecasts extends CRMEntity {
 		}
 		$return_value['CUSTOM_BUTTON'] = $button;
 
-		$log->debug('Exiting getPotentials method ...');
+		$log->debug('< getPotentials');
 		return $return_value;
 	}
 
