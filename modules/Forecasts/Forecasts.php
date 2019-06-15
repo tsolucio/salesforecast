@@ -390,17 +390,21 @@ class Forecasts extends CRMEntity {
 			}
 			$total_pipeline += $value;
 		}
-		$total_pcquota = $total_closed/$forecastData['total_quota']*100;
+		if (empty((float)$forecastData['total_quota'])) {
+			$total_pcquota = 0;
+		} else {
+			$total_pcquota = $total_closed/$forecastData['total_quota']*100;
+		}
 		$update_fields_str = implode(', ', $update_fields);
 		$query = "update vtiger_forecasts
-	  set total_closed={$total_closed}, total_pipeline={$total_pipeline}, total_pcquota={$total_pcquota}, {$update_fields_str}
-	  where forecastsid={$this->id}";
+			set total_closed={$total_closed}, total_pipeline={$total_pipeline}, total_pcquota={$total_pcquota}, {$update_fields_str}
+			where forecastsid={$this->id}";
 		$adb->query($query);
 	}
 
 	public function getFunnelValues() {
 		global $log, $currentModule, $adb;
-		$log->debug('Entering getFunnelValues method ...');
+		$log->debug('> getFunnelValues');
 		$this->retrieve_entity_info($this->id, $currentModule);
 		$conditions = array( 1 );
 		if ($this->column_fields['use_category']) {
