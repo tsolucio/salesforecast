@@ -167,13 +167,13 @@ class Forecasts extends CRMEntity {
 
 	/**
 	 * Invoked when special actions are performed on the module.
-	 * @param String Module name
-	 * @param String Event Type (module.postinstall, module.disabled, module.enabled, module.preuninstall)
+	 * @param string Module name
+	 * @param string Event Type (module.postinstall, module.disabled, module.enabled, module.preuninstall)
 	 */
 	public function vtlib_handler($modulename, $event_type) {
 		global $adb;
 		if ($event_type == 'module.postinstall') {
-			// TODO Handle post installation actions
+			// Handle post installation actions
 			$module = Vtiger_Module::getInstance($modulename);
 			$modPotentials = Vtiger_Module::getInstance('Potentials');
 			$block = Vtiger_Block::getInstance('LBL_OPPORTUNITY_INFORMATION', $modPotentials);
@@ -199,15 +199,15 @@ class Forecasts extends CRMEntity {
 			$nextid = $adb->getUniqueID("vtiger_picklist_dependency");
 			$adb->pquery("$sql (?, ?, 'frequency', 'period', 'YEARLY', '[".'"PERIOD_1"]'."', NULL)", array($nextid,$tabid));
 		} elseif ($event_type == 'module.disabled') {
-			// TODO Handle actions when this module is disabled.
+			// Handle actions when this module is disabled.
 		} elseif ($event_type == 'module.enabled') {
-			// TODO Handle actions when this module is enabled.
+			// Handle actions when this module is enabled.
 		} elseif ($event_type == 'module.preuninstall') {
-			// TODO Handle actions when this module is about to be deleted.
+			// Handle actions when this module is about to be deleted.
 		} elseif ($event_type == 'module.preupdate') {
-			// TODO Handle actions before this module is updated.
+			// Handle actions before this module is updated.
 		} elseif ($event_type == 'module.postupdate') {
-			// TODO Handle actions after this module is updated.
+			// Handle actions after this module is updated.
 		}
 	}
 
