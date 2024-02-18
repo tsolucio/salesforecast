@@ -150,6 +150,7 @@ $mod_strings = array(
 	'total_bestcase'=>'Total Best Case',
 	'total_closed'=>'Total Closed',
 	'total_pcquota'=>'Total % Quota',
+	'total_pipeline'=>'Total In Process',
 	'LBL_FORECASTS_PCQUOTA' => '% Quota',
 	'LBL_FORECASTS_CLOSED' => 'Closed',
 	'LBL_FORECASTS_PIPELINE' => 'Pipeline',
@@ -163,6 +164,7 @@ $mod_strings = array(
 	'LBL_BESTCASE' => 'Best Case Amount',
 	'LBL_PIPELINE' => 'Pipeline',
 	'LBL_TOTALS' => 'Totals',
+	'LBL_TOTAL_QUOTA' => 'Total Cuota',
 
 	'MonthNames' => array( 1=>'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'),
 );
