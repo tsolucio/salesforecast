@@ -10,25 +10,21 @@
 require_once 'Smarty_setup.php';
 
 global $mod_strings, $app_strings, $currentModule, $current_user, $theme, $log;
+$smarty = new vtigerCRM_Smarty();
 
 $focus = CRMEntity::getInstance($currentModule);
 
-if (isset($tool_buttons)==false) {
+if (!isset($tool_buttons)) {
 	$tool_buttons = Button_Check($currentModule);
 }
-$smarty = new vtigerCRM_Smarty();
 
 $record = vtlib_purify($_REQUEST['record']);
-$isduplicate = isset($_REQUEST['isDuplicate']) ? vtlib_purify($_REQUEST['isDuplicate']) : '';
 $tabid = getTabid($currentModule);
 
 if ($record != '') {
 	$focus->id = $record;
 	$focus->retrieve_entity_info($record, $currentModule);
 	$focus->name=$focus->column_fields[$focus->list_link_field];
-}
-if ($isduplicate == 'true') {
-	$focus->id = '';
 }
 $errormessageclass = isset($_REQUEST['error_msgclass']) ? vtlib_purify($_REQUEST['error_msgclass']) : '';
 $errormessage = isset($_REQUEST['error_msg']) ? vtlib_purify($_REQUEST['error_msg']) : '';
@@ -68,7 +64,7 @@ $smarty->assign('YEAR', $focus->column_fields['year']);
 $smarty->assign('FREQ', getTranslatedString($focus->column_fields['frequency'], $currentModule));
 $smarty->assign('PERIOD', getTranslatedString($focus->column_fields['period'], $currentModule));
 $relstr = getEntityName(getSalesEntityType($focus->column_fields['relatedto']), $focus->column_fields['relatedto']);
-$smarty->assign('RELTO', $relstr[$focus->column_fields['relatedto']]);
+$smarty->assign('RELTO', isset($relstr[$focus->column_fields['relatedto']]) ? $relstr[$focus->column_fields['relatedto']] : '');
 $smarty->assign('ONLYR', ($focus->column_fields['only_related']==1 ? getTranslatedString('LBL_YES') : getTranslatedString('LBL_NO')));
 $smarty->assign('ONLYA', ($focus->column_fields['only_user']==1 ? getTranslatedString('LBL_YES') : getTranslatedString('LBL_NO')));
 $smarty->assign('USECAT', ($focus->column_fields['use_category']==1 ? getTranslatedString('LBL_YES') : getTranslatedString('LBL_NO')));
@@ -80,9 +76,6 @@ $currency_id = fetchCurrency($current_user->id);
 $rate_symbol=getCurrencySymbolandCRate($currency_id);
 $currency = $rate_symbol['symbol'];
 $smarty->assign('CURRENCY_SIMBOL', $currency);
-
-// Identify this module as custom module.
-$smarty->assign('CUSTOM_MODULE', $focus->IsCustomModule);
 
 $smarty->assign('APP', $app_strings);
 $smarty->assign('MOD', $mod_strings);
@@ -113,8 +106,6 @@ $validationArray = split_validationdataArray(getDBValidationData($focus->tab_nam
 $smarty->assign('VALIDATION_DATA_FIELDNAME', $validationArray['fieldname']);
 $smarty->assign('VALIDATION_DATA_FIELDDATATYPE', $validationArray['datatype']);
 $smarty->assign('VALIDATION_DATA_FIELDLABEL', $validationArray['fieldlabel']);
-$smarty->assign('TODO_PERMISSION', CheckFieldPermission('parent_id', 'Calendar'));
-$smarty->assign('EVENT_PERMISSION', CheckFieldPermission('parent_id', 'Events'));
 
 $smarty->assign('EDIT_PERMISSION', isPermitted($currentModule, 'EditView', $record));
 $smarty->assign('CHECK', $tool_buttons);
@@ -126,19 +117,70 @@ if (GlobalVariable::getVariable('Application_DetailView_Record_Navigation', 1) &
 	$smarty->assign('privrecord', '');
 	$smarty->assign('nextrecord', '');
 }
-
-$smarty->assign('IS_REL_LIST', isPresentRelatedLists($currentModule));
+$IS_REL_LIST = isPresentRelatedLists($currentModule, true);
+$RLdata = array();
+if (!empty($IS_REL_LIST)) {
+	foreach ($IS_REL_LIST as $id => $label) {
+		$name = getTabModuleName($id);
+		if (empty($name)) {
+			continue;
+		}
+		$modInstance = CRMEntity::getInstance($name);
+		if (strpos($modInstance->moduleIcon['icon'], '-') !== false) {
+			$iconArray = explode('-', $modInstance->moduleIcon['icon']);
+			$modInstance->moduleIcon['icon'] = end($iconArray);
+		}
+		$icon = $modInstance->moduleIcon;
+		$RLdata[$id] = $icon;
+	}
+}
+$smarty->assign('IS_REL_LIST', $IS_REL_LIST);
+$smarty->assign('REL_MOD_ICONS', $RLdata);
+if (strpos($focus->moduleIcon['icon'], '-') !== false) {
+	$iconArray = explode('-', $focus->moduleIcon['icon']);
+	$focus->moduleIcon['icon'] = end($iconArray);
+}
+$smarty->assign('currentModuleIcon', $focus->moduleIcon);
 $isPresentRelatedListBlock = isPresentRelatedListBlock($currentModule);
 $smarty->assign('IS_RELBLOCK_LIST', $isPresentRelatedListBlock);
 $singlepane_view = GlobalVariable::getVariable('Application_Single_Pane_View', 0, $currentModule);
 $singlepane_view = empty($singlepane_view) ? 'false' : 'true';
 $singlepane_view = 'true';
 $smarty->assign('SinglePane_View', $singlepane_view);
+// Gather the custom link information to display
+include_once 'vtlib/Vtiger/Link.php';
+$customlink_params = array(
+	'MODULE'=>$currentModule,
+	'RECORD'=>$focus->id,
+	'ACTION'=>vtlib_purify($_REQUEST['action'])
+);
+$RELATEDPANES = Vtiger_Link::getAllByType(
+	$tabid,
+	array('RELATEDPANE'),
+	$customlink_params,
+	null,
+	$focus->id
+);
 $bmapname = $currentModule.'RelatedPanes';
 $cbMapid = GlobalVariable::getVariable('BusinessMapping_'.$bmapname, cbMap::getMapIdByName($bmapname));
-if ($cbMapid) {
-	$cbMap = cbMap::getMapByID($cbMapid);
-	$rltabs = $cbMap->RelatedPanes($focus->id);
+if ($cbMapid || !empty($RELATEDPANES['RELATEDPANE'])) {
+	if (!$cbMapid) {
+		$rltabs = array();
+		foreach ($RELATEDPANES['RELATEDPANE'] as $rp) {
+			if (empty($rp->linkurl)) {
+				continue;
+			}
+			$cbMap = cbMap::getMapByName($rp->linkurl);
+			if (!$cbMap) {
+				continue;
+			}
+			$rltabs = $cbMap->RelatedPanes($focus->id);
+			$rltabs = array_merge($rltabs, $rltabs['panes']);
+		}
+	} else {
+		$cbMap = cbMap::getMapByID($cbMapid);
+		$rltabs = $cbMap->RelatedPanes($focus->id);
+	}
 	$smarty->assign('RLTabs', $rltabs['panes']);
 	$smarty->assign('HASRELATEDPANES', 'true');
 } else {
@@ -153,14 +195,14 @@ if ($singlepane_view == 'true' || $isPresentRelatedListBlock) {
 		}
 		$index++;
 	}
-	$smarty->assign("RELATEDLISTS", $related_array);
+	$smarty->assign('RELATEDLISTS', $related_array);
 
 	require_once 'include/ListView/RelatedListViewSession.php';
 	if (!empty($_REQUEST['selected_header']) && !empty($_REQUEST['relation_id'])) {
 		RelatedListViewSession::addRelatedModuleToSession(vtlib_purify($_REQUEST['relation_id']), vtlib_purify($_REQUEST['selected_header']));
 	}
 	$open_related_modules = RelatedListViewSession::getRelatedModulesFromSession();
-	$smarty->assign("SELECTEDHEADERS", $open_related_modules);
+	$smarty->assign('SELECTEDHEADERS', $open_related_modules);
 } else {
 	$smarty->assign('RELATEDLISTS', array());
 }
@@ -176,8 +218,6 @@ if (isPermitted($currentModule, 'Delete', $record) == 'yes') {
 	$smarty->assign('DELETE', '');
 }
 
-$blocks = getBlocks($currentModule, 'detail_view', '', $focus->column_fields);
-$smarty->assign('BLOCKS', $blocks);
 $custom_blocks = getCustomBlocks($currentModule, 'detail_view');
 $smarty->assign('CUSTOMBLOCKS', $custom_blocks);
 $smarty->assign('FIELDS', $focus->column_fields);
@@ -187,18 +227,83 @@ if (is_admin($current_user)) {
 	$smarty->assign('hdtxt_IsAdmin', 0);
 }
 
+$dvwidget = Vtiger_Link::getAllByType(
+	$tabid,
+	array('DETAILVIEWWIDGET'),
+	$customlink_params,
+	null,
+	$focus->id
+);
+$dvwidget = array_filter(
+	$dvwidget['DETAILVIEWWIDGET'],
+	function ($dvw) {
+		return substr($dvw->linkurl, 0, 8)=='block://';
+	}
+);
+$blocks = getBlocks($currentModule, 'detail_view', '', $focus->column_fields);
 $smarty->assign('BLOCKINITIALSTATUS', $_SESSION['BLOCKINITIALSTATUS']);
-// Gather the custom link information to display
-include_once 'vtlib/Vtiger/Link.php';
-$customlink_params = array('MODULE'=>$currentModule, 'RECORD'=>$focus->id, 'ACTION'=>vtlib_purify($_REQUEST['action']));
-$smarty->assign('CUSTOM_LINKS', Vtiger_Link::getAllByType($tabid, array('DETAILVIEWBASIC', 'DETAILVIEW', 'DETAILVIEWWIDGET'), $customlink_params, null, $focus->id));
+$blocks = array_merge($blocks, $dvwidget);
+$mergedBlocks = array();
+$headers = array();
+foreach ($blocks as $block) {
+	if (is_object($block)) {
+		$mergedBlocks[] = array(
+			'__type' => 'widget',
+			'__sequence' => (int)$block->sequence,
+			'__fields' => $block
+		);
+	} else {
+		if (isset($block['__header']) && $block['__type'] != 'relatedlist') {
+			if (in_array($block['__header'], $headers)) {
+				continue;
+			}
+			$headers[] = $block['__header'];
+			$mergedBlocks[] = $block;
+		} else {
+			//suport for related lists
+			if (!isset($block['__type'])) {
+				continue;
+			}
+			$header = array_keys($block['__fields']);
+			$mergedBlocks[] = array(
+				'__sequence' => (int)$block['__sequence'],
+				'__type' => 'relatedlist',
+				'__header' => $header[0],
+				'__fields' => $block['__fields'],
+			);
+		}
+	}
+}
+sort_array_data($mergedBlocks, '__sequence');
+// put same sequence widgets after the block
+for ($blk = 0; $blk<count($mergedBlocks)-1; $blk++) {
+	if ($mergedBlocks[$blk]['__type']=='widget' && $mergedBlocks[$blk+1]['__type']=='block' && $mergedBlocks[$blk]['__sequence']==$mergedBlocks[$blk+1]['__sequence']) {
+		$blkswap = $mergedBlocks[$blk];
+		$mergedBlocks[$blk] = $mergedBlocks[$blk+1];
+		$mergedBlocks[$blk+1] = $blkswap;
+	}
+}
+$smarty->assign('BLOCKS', $mergedBlocks);
+$smarty->assign(
+	'CUSTOM_LINKS',
+	Vtiger_Link::getAllByType(
+		$tabid,
+		array('DETAILVIEWBASIC','DETAILVIEW','DETAILVIEWWIDGET','DETAILVIEWBUTTON','DETAILVIEWBUTTONMENU','DETAILVIEWHTML'),
+		$customlink_params,
+		null,
+		$focus->id
+	)
+);
 if ($isPresentRelatedListBlock) {
 	$related_list_block = array();
 	foreach ($blocks as $blabel => $binfo) {
-		if (!empty($binfo['relatedlist'])) {
+		if (is_object($binfo)) {
+			continue;
+		}
+		if (!empty($binfo['__fields']['relatedlist'])) {
 			foreach ($related_array as $rlabel => $rinfo) {
-				if ($rinfo['relationId']==$binfo['relatedlist']) {
-					$related_list_block[$binfo['relatedlist']] = array($rlabel=>$rinfo);
+				if ($rinfo['relationId']==$binfo['__fields']['relatedlist']) {
+					$related_list_block[$binfo['__fields']['relatedlist']] = array($rlabel=>$rinfo);
 					break;
 				}
 			}
@@ -226,12 +331,32 @@ $cbMapFDEP = array();
 $cbMapid = GlobalVariable::getVariable('BusinessMapping_'.$bmapname, cbMap::getMapIdByName($bmapname));
 if ($cbMapid) {
 	$cbMap = cbMap::getMapByID($cbMapid);
-	$cbMapFDEP = $cbMap->FieldDependency();
+	$cbMapFDEP = $cbMap->FieldDependency('detail');
 	$cbMapFDEP = $cbMapFDEP['fields'];
 }
 $smarty->assign('FIELD_DEPENDENCY_DATASOURCE', json_encode($cbMapFDEP));
+$Application_DetailView_Inline_Edit = GlobalVariable::getVariable('Application_DetailView_Inline_Edit', 1, $currentModule, $current_user->id);
+$Application_Inline_Edit = GlobalVariable::getVariable('Application_Inline_Edit', 1, $currentModule, $current_user->id, $_REQUEST['action']);
+$Application_Inline_Edit_Boolean = !(!$Application_DetailView_Inline_Edit || !$Application_Inline_Edit);
+$smarty->assign('DETAILVIEW_AJAX_EDIT', $Application_Inline_Edit_Boolean);
+$smarty->assign('Application_Toolbar_Show', GlobalVariable::getVariable('Application_Toolbar_Show', 1));
+$smarty->assign('Application_Textarea_Style', GlobalVariable::getVariable('Application_Textarea_Style', 'height:140px;', $currentModule, $current_user->id));
+$smarty->assign('App_Header_Buttons_Position', GlobalVariable::getVariable('Application_Header_Buttons_Position', ''));
+$smarty->assign('TABSCOPED', empty(GlobalVariable::getVariable('Application_RelatedPane_Scoped', '1')) ? 'default' : 'scoped');
+$smarty->assign('PHONECLICKABLE', (filter_var(GlobalVariable::getVariable('Application_Phone_Clickable', 'false'), FILTER_VALIDATE_BOOLEAN)));
+$Hide_Duplicate = GlobalVariable::getVariable('Application_DetailView_Hide_Duplicate', 0, $currentModule);
+$smarty->assign('Hide_Duplicate', $Hide_Duplicate ? 'yes' : 'no');
 
-$smarty->assign('DETAILVIEW_AJAX_EDIT', GlobalVariable::getVariable('Application_DetailView_Inline_Edit', 1));
-
+// sending PopupFilter map results to the frontEnd
+$bmapname = $currentModule.'_PopupFilter';
+$Mapid = GlobalVariable::getVariable('BusinessMapping_'.$bmapname, cbMap::getMapIdByName($bmapname));
+if ($Mapid) {
+	$MapObject = new cbMap();
+	$MapObject->id = $Mapid;
+	$MapObject->mode = '';
+	$MapObject->retrieve_entity_info($Mapid, 'cbMap');
+	$MapResult = $MapObject->PopupFilter($record, $currentModule);
+	$smarty->assign('PopupFilterMapResults', $MapResult);
+}
 $smarty->display('modules/Forecasts/DetailView.tpl');
 ?>
